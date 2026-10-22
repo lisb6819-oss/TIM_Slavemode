@@ -22,6 +22,29 @@
 
 /* USER CODE BEGIN 0 */
 
+#include <stdio.h>
+/* printf -> syscalls.c: _write -> USART1 */
+int __io_putchar(int ch)
+{
+  uint8_t data = (uint8_t)ch;
+
+  if (HAL_UART_Transmit(&huart1, &data, 1, 1000) != HAL_OK)
+  {
+    return EOF;
+  }
+
+  return (int)data;
+}
+
+
+uint8_t USART1_RX_BUF[USART1_REC_LEN];     //接收缓冲
+uint16_t USART1_RX_STA = 0; 
+/*  接收状态
+ *  bit15，      接收完成标志
+ *  bit14，      接收到0x0d
+ *  bit13~0，    接收到的有效字节数目
+*/               //接收状态标记
+uint8_t rx_buffer[RXBUFFERSIZE];            //接收中断缓冲
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
@@ -51,7 +74,9 @@ void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-
+  /* Send printf output immediately instead of buffering it. */
+  setvbuf(stdout, NULL, _IONBF, 0);
+  HAL_UART_Receive_IT(&huart1, rx_buffer, RXBUFFERSIZE); //开启接收中断
   /* USER CODE END USART1_Init 2 */
 
 }
@@ -83,6 +108,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    /* USART1 interrupt Init */
+    HAL_NVIC_SetPriority(USART1_IRQn, 15, 0);
+    HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* USER CODE BEGIN USART1_MspInit 1 */
 
   /* USER CODE END USART1_MspInit 1 */
@@ -106,6 +134,8 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10);
 
+    /* USART1 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(USART1_IRQn);
   /* USER CODE BEGIN USART1_MspDeInit 1 */
 
   /* USER CODE END USART1_MspDeInit 1 */
@@ -113,6 +143,30 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
-
+  void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+  {
+      if(huart->Instance == USART1)
+      {
+          if((USART1_RX_STA&0x8000)==0) //接收未完成
+          {
+              if(USART1_RX_STA&0x4000) //接收到了0x0d
+              {
+                  if(rx_buffer[0]!=0x0a)USART1_RX_STA=0;//接收错误,重新开始
+                  else USART1_RX_STA|=0x8000;    //接收完成了
+              }
+              else //还没收到0X0D
+              {
+                  if(rx_buffer[0]==0x0d)USART1_RX_STA|=0x4000;
+                  else
+                  {
+                      USART1_RX_BUF[USART1_RX_STA&0X3FFF]=rx_buffer[0];
+                      USART1_RX_STA++;
+                      if(USART1_RX_STA>(USART1_REC_LEN-1))USART1_RX_STA=0;//接收数据错误,重新开始接收
+                  }
+              }
+          }
+      }
+      HAL_UART_Receive_IT(&huart1, rx_buffer, RXBUFFERSIZE); //开启下次接收中断
+  }
 /* USER CODE END 1 */
 
