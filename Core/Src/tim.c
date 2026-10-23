@@ -139,10 +139,10 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
     if(__HAL_TIM_GET_FLAG(htim, TIM_FLAG_TRIGGER) != RESET)
     {
         __HAL_TIM_CLEAR_FLAG(htim, TIM_FLAG_TRIGGER);
-        printf("slavemode Elapsed!\r\n");
+        printf("从模式触发!\r\n");
     }
     else {
-      printf("Period Elapsed!\r\n");
+      printf("周期结束!\r\n");
     }  
   }
 
