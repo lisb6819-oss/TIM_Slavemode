@@ -136,14 +136,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   if(htim->Instance == TIM2)
   {
     // Code to execute when TIM2 period elapses
-    if(__HAL_TIM_GET_FLAG(htim, TIM_FLAG_TRIGGER) != RESET)
-    {
-        __HAL_TIM_CLEAR_FLAG(htim, TIM_FLAG_TRIGGER);
-        printf("从模式触发!\r\n");
-    }
-    else {
       printf("周期结束!\r\n");
-    }  
   }
 
  }

@@ -100,6 +100,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+     if(__HAL_TIM_GET_FLAG(&htim2, TIM_FLAG_TRIGGER) != RESET)
+    {
+        __HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_TRIGGER);
+        printf("门模式触发!\r\n");
+    }
     count = __HAL_TIM_GET_COUNTER(&htim2);
     printf("Count: %d\r\n", count);
     HAL_Delay(500);
