@@ -56,7 +56,11 @@ void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+  if (HAL_TIM_OnePulse_Init(&htim2, TIM_OPMODE_SINGLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_TRIGGER;
   sSlaveConfig.InputTrigger = TIM_TS_TI1FP1;
   sSlaveConfig.TriggerPolarity = TIM_TRIGGERPOLARITY_RISING;
   sSlaveConfig.TriggerFilter = 15;
@@ -136,14 +140,10 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   if(htim->Instance == TIM2)
   {
     // Code to execute when TIM2 period elapses
-    if(__HAL_TIM_GET_FLAG(htim, TIM_FLAG_TRIGGER) != RESET)
-    {
-        __HAL_TIM_CLEAR_FLAG(htim, TIM_FLAG_TRIGGER);
-        printf("从模式触发!\r\n");
-    }
-    else {
+   
+    
       printf("周期结束!\r\n");
-    }  
+      
   }
 
  }
